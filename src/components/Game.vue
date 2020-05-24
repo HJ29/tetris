@@ -1,21 +1,37 @@
 <template>
-<div>
-  {{time}}
-  {{cleared}}
-  <button @click="start">start</button>
-  <button @click="end">stop</button>
-  <div 
-    :style="{width: `${container.x * size}px`, height: `${container.y * size}px`}"
-    class="container">
-    <block
-      ref="block"
-      :type="type"
-      :positions="block.positions"
-      :size="size"/>
-    <base-block 
-      :base="base"
-      :outline="outline"
-    />
+<div class="column">
+  <div class="column items-center setting-container">
+    <div class="text">
+      {{`TIME: ${time}`}}
+    </div>
+    <div class="text">
+      {{`SCORE: ${cleared}`}}
+    </div>
+    <div 
+      class="btn cursor-pointer"
+      @click="start">
+      START
+    </div>
+    <div 
+      class="btn cursor-pointer"
+      @click="end">
+      STOP
+    </div>
+  </div>
+  <div class="row items-center justify-center">
+    <div 
+      :style="{width: `${container.x * size}px`, height: `${container.y * size}px`}"
+      class="game-container">
+      <block
+        ref="block"
+        :type="type"
+        :positions="block.positions"
+        :size="size"/>
+      <base-block 
+        :base="base"
+        :size="size"
+      />
+    </div>
   </div>
 </div>
 </template>
@@ -49,7 +65,7 @@ export default {
       timer: null,
       time: 0,
       cleared: 0,
-      size: 30,
+      size: 32,
       typeIndex: null,
       block: {
         center: defaultCenter,
@@ -218,8 +234,8 @@ export default {
 </script>
 
 <style lang="scss">
-$pixel-size: 30px;
-.container {
+$pixel-size: 32px;
+.game-container {
   background: black;
   position: relative;
   .pixel {
@@ -228,5 +244,21 @@ $pixel-size: 30px;
     background: blue;
     position: absolute;
   }
+}
+.setting-container {
+  padding: 20px 0px;
+  .text {
+    margin: 5px;
+  }
+  .btn {
+    border-style: solid;
+    border-width: 2px;
+    border-radius: 5px;
+    border-color: black;
+    padding: 5px 20px;
+    width: 150px;
+    text-align: center;
+    margin: 5px;
+  } 
 }
 </style>

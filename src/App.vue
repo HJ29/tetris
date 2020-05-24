@@ -1,17 +1,26 @@
 <template>
-  <div 
-    id="app">
-    <game />
-  </div>
+  <q-layout view="lHh Lpr lFf">
+    <q-page-container>
+      <game />
+    </q-page-container>
+  </q-layout>
 </template>
 
 <script>
-import Vue from 'vue'
+export default {
+  name: 'LayoutDefault',
 
-export default Vue.extend({
-  name: 'App',
   components: {
     Game: () => import('./components/Game.vue')
   },
-})
+
+  data () {
+    return {
+      leftDrawerOpen: false
+    }
+  }
+}
 </script>
+
+<style>
+</style>
