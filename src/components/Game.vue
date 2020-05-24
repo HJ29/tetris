@@ -241,7 +241,10 @@ $pixel-size: 32px;
   .pixel {
     height: $pixel-size;
     width: $pixel-size;
-    background: blue;
+    background: white;
+    border-style: solid;
+    border-color: black;
+    border-width: 1px;
     position: absolute;
   }
 }

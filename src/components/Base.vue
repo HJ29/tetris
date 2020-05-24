@@ -4,7 +4,6 @@
       v-for="(position, i) in base"
       :key="i"
       :style="$pixel.getStyle(position, size)"
-      style="background: green;"
       class="pixel"/>
   </div>
 </template>
