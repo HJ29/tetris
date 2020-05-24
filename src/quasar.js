@@ -26,6 +26,9 @@ import {
   QItem,
   QItemSection,
   QItemLabel,
+  Dialog,
+  QDialog,
+  QCard
 } from 'quasar'
 
 Vue.use(Quasar, {
@@ -44,9 +47,12 @@ Vue.use(Quasar, {
     QItem,
     QItemSection,
     QItemLabel,
+    QDialog,
+    QCard
   },
   directives: {
   },
   plugins: {
+    Dialog
   }
  })

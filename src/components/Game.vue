@@ -7,18 +7,20 @@
     <div class="text">
       {{`SCORE: ${cleared}`}}
     </div>
-    <div 
-      class="btn cursor-pointer"
-      @click="start">
-      START
-    </div>
-    <div 
-      class="btn cursor-pointer"
-      @click="end">
-      STOP
+    <div class="row items-center justify-center">
+      <div 
+        class="btn cursor-pointer"
+        @click="start">
+        START
+      </div>
+      <div 
+        class="btn cursor-pointer"
+        @click="end">
+        END
+      </div>
     </div>
   </div>
-  <div class="row items-center justify-center">
+  <div class="column items-center justify-center">
     <div 
       :style="{width: `${container.x * size}px`, height: `${container.y * size}px`}"
       class="game-container">
@@ -37,10 +39,11 @@
 </template>
 
 <script>
+import ScoreDialog from './ScoreDialog.vue'
 const width = 10;
 const height = 20;
 const outline = [];
-const defaultCenter = {x: 4, y: 2}
+const defaultCenter = {x: 4, y: 0}
 const types = ['t','o','s','z','l','i']
 function random(num) {
   return Math.floor(Math.random() * Math.floor(num))
@@ -62,8 +65,9 @@ export default {
   },
   data() {
     return {
-      timer: null,
+      timeInterval: null,
       time: 0,
+      frequency: 500,
       cleared: 0,
       size: 32,
       typeIndex: null,
@@ -81,14 +85,10 @@ export default {
     }
   },  
   mounted() {
-    window.addEventListener("keydown", e => {
-      if(this.time > 0) {
-        this.keyPress(e.keyCode)
-      }
-    });
+    this.setKeydownListener(true)
   },
   beforeDestroy() {
-    this.end()
+    this.setKeydownListener(false)
   },
   computed: {
     type() {
@@ -96,19 +96,53 @@ export default {
     }
   },
   methods: {
+    setKeydownListener(ok) {
+      if(ok) {
+        window.addEventListener("keydown", this.keyPress);
+      } else {
+        window.removeEventListener("keydown", this.keyPress)
+      }
+    },
+    keyPress(e) {
+      switch(e.keyCode) {
+        case 13:
+          this.end()
+          this.generateNewBlock()
+          this.start()
+          break;
+        case 37:  // left
+          this.moveX(-1);
+          break;
+        case 39:  // right
+          this.moveX(1);
+          break;
+        case 81:  // q
+        case 38:  // up
+          this.transform(1);
+          break;
+        case 87:  // w
+        case 40:  // down
+          this.moveY(1);
+          break;
+        default:
+          break;
+      }
+    },
     start() {
-      this.end()
-      this.timer = setInterval(() => {
-        this.moveY(1)
+      this.timeInterval = setInterval(() => {
         this.time += 1
-      }, 500)
+      }, 1000)
+      this.gameInterval = setInterval(() => {
+        this.moveY(1)
+      }, this.frequency)
     },
     end() {
       this.base = []
+      this.generateNewBlock(false)
       this.time = 0
       this.cleared = 0
-      this.change()
-      clearInterval(this.timer)
+      clearInterval(this.timeInterval)
+      clearInterval(this.gameInterval)
     },
     transform(num) {
       let form = this.form + num;
@@ -134,14 +168,22 @@ export default {
         this.block.positions = positions
       }
     },
-    change() {
-      this.typeIndex = random(types.length);
-      this.$nextTick(() => {
-        this.block.center = defaultCenter
-        this.block.positions = this.$refs.block.next(this.block.center, this.form)
-      })
+    generateNewBlock(generate = true) {
+      if(generate) {
+        this.form = 0
+        this.typeIndex = random(types.length);
+        this.$nextTick(() => {
+          this.block.center = defaultCenter
+          this.block.positions = this.$refs.block.next(this.block.center, this.form)
+        })
+      } else {
+        this.block = {
+          center: defaultCenter,
+          positions: []
+        }
+      }
     },
-    moveY(y) {
+    async moveY(y) {
       const center = clone(this.block.center)
       center.y += y
       const positions = this.$refs.block.next(center, this.form)
@@ -151,36 +193,6 @@ export default {
         this.block.positions = positions
       } else {
         this.place(this.block.positions)
-        this.clear()
-        this.block.positions = this.$refs.block.next(this.block.center, this.form)
-      }
-    },
-    keyPress(code) {
-      switch(code) {
-        case 37:  // left
-          this.moveX(-1);
-          break;
-        case 39:  // right
-          this.moveX(1);
-          break;
-        case 81:  // q
-        case 38:  // up
-          this.transform(1);
-          break;
-        case 87:  // w
-        case 40:  // down
-          this.moveY(1);
-          break;
-        case 32:  { // space
-          // let i = this.typeIndex + 1
-          // if(i === this.types.length) {
-          //   i = 0
-          // }
-          // this.typeIndex = i
-          break;
-        }
-        default:
-          break;
       }
     },
     check(positions) {
@@ -194,40 +206,57 @@ export default {
       }
       return true
     },
-    place(positions) {
+    async place(positions) {
       this.base = this.base.concat(positions)
-      this.change()
-    },
-    clear() {
-      const rows = []
-      this.base.forEach((pixel, i) => {
-        if(pixel.y === 1) {
-          if (confirm(`Score: ${this.cleared}\nClick OK to restart!`)) {
+        const result = await this.clear()
+        if(result) {
+          this.generateNewBlock()
+        } else {
+          this.setKeydownListener(false)
+          const score = this.cleared
+          const time = this.time
+          this.$q.dialog({
+            component: ScoreDialog,
+            score,
+            time
+          }).onOk(() => {
+            this.generateNewBlock()
             this.start()
-          } else {
-            this.end()
+          }).onDismiss(() => {
+            this.setKeydownListener(true)
+          })
+          this.end()
+        }
+    },
+    async clear() {
+      return new Promise((resolve) => {
+        const rows = []
+        this.base.forEach((pixel, i) => {
+          if(pixel.y === 1) {
+            resolve(false)
           }
-        }
-        if(!rows[pixel.y]) {
-          rows[pixel.y] = []
-        }
-        rows[pixel.y].push(i)
-      })
-      rows.forEach((cols, y) => {
-        if(cols.length === width) {
-          this.base = this.base.reduce((base, pixel) => {
-            const result = pixel
-            if(pixel.y < y) {
-              result.y += 1 
-              base.push(result)
-            } else if(pixel.y > y) {
-              base.push(result)
-            }
-            return base
-          }, [])
-          this.cleared += 1
-        }
-      })
+          if(!rows[pixel.y]) {
+            rows[pixel.y] = []
+          }
+          rows[pixel.y].push(i)
+        })
+        rows.forEach((cols, y) => {
+          if(cols.length === width) {
+            this.base = this.base.reduce((base, pixel) => {
+              const result = pixel
+              if(pixel.y < y) {
+                result.y += 1 
+                base.push(result)
+              } else if(pixel.y > y) {
+                base.push(result)
+              }
+              return base
+            }, [])
+            this.cleared += 1
+          }
+        })
+        resolve(true)
+      }) 
     }
   }
 }

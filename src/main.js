@@ -6,9 +6,12 @@ Vue.config.productionTip = false
 
 Vue.prototype.$pixel = {
   getStyle(position, size) {
+    const x = position.x - 1
+    const y = position.y - 1
     return {
-      left: `${(position.x - 1) * size}px`,
-      top: `${(position.y - 1) * size}px`
+      opacity: y < 0 ? 0 : 1,
+      left: `${x * size}px`,
+      top: `${y * size}px`
     }
   },
   getPositions(center, block) {
