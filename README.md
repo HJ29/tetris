@@ -20,5 +20,8 @@ yarn build
 yarn lint
 ```
 
+### Demo
+[Demo](https://hj29.github.io/tetris/)
+
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
