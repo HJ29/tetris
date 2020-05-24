@@ -278,7 +278,7 @@ $pixel-size: 32px;
   }
 }
 .setting-container {
-  padding: 20px 0px;
+  padding: 40px 0px;
   .text {
     margin: 5px;
   }
